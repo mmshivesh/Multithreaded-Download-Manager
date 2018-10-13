@@ -2,3 +2,4 @@
 test/
 *.bin
 *.pdf
+__pycache__
