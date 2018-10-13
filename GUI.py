@@ -1,58 +1,94 @@
-import tkinter
-from tkinter import ttk
-import urllib.request
-import threading
 
-AppName = 'Multithreaded Downloader'
+# GUI for a Multithreaded Download Manager. 
+
+# Import Statements
+import tkinter				# Python GUI Library - For building GUI
+from tkinter import ttk		# Overrides tk themed widgets - Progressbar is in this library
+import threading			# Python Threading Library - Start multiple downloads in threaded fashion
+import urllib.request		# Python url parse library - Used to Download urls
+
+# Global Constants
+fileGUIRowNumber = 2		# 0 and 1 are GUI elements. The first download can be inserted at 2
+threadJobList = []
+
+# =================================
+# Initialize GUI
+# =================================
+appName = 'Multithreaded Downloader'
 window = tkinter.Tk()
-window.title(AppName)
+window.title(appName)
 window.geometry('1000x600')
+# Setting up a five column grid, Not fixed, just some number.
+window.grid_columnconfigure(0, weight=0)
+window.grid_columnconfigure(1, weight=1)
+window.grid_columnconfigure(2, weight=1)
+window.grid_columnconfigure(3, weight=1)
+window.grid_columnconfigure(4, weight=0)
 
-#List to store the passed urls
-storeUrlsToDownload = list()
+def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
+	f.close()
+	fileNameLabel.grid_forget()
+	progressBar.grid_forget()
+	cancelButton.grid_forget()
+	print(threadJobList)
+	thread.exit(1)
 
-print_lock = threading.Lock()
-file_size_dl = int()
-file_name = tkinter.StringVar(window, value='')
-def downloader(url):
-	''' Downloads content from url ''' 
-	file_name.set(url.split('/')[-1])
-	u = urllib.request.urlopen(url)
-	file_size = int(u.getheader("Content-Length"))
-	# Check for html page or downloadable file
-	# print(u.getheader("Content-Length"), u.getheader('Content-Type'))
-	progress['value'] = 0
-	progress["maximum"] = file_size
-	f = open(file_name.get(), 'wb')
-	# with print_lock:	
-	# 	print(file_size)
-	file_size_dl = 0
-	block_sz = 2**10
+def downloadOnAThread(url):
+	# It is ensured that the 'url' obtained here is downloadable
+	# This function creates a thread, pushes the coressponding filename and the progress onto the GUI and manages it
+	# When the download finishes, the corresponding row is removed (opt. and all others are moved up?)
+	u = urllib.request.urlopen(url)										# Open the File
+	fileName = tkinter.StringVar(window,value=url.split('/')[-1])		# Get the file name to write to
+	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
+	# print(totalFileSize, url)
+	
+	# Set up the GUI
+	
+	downloadingFileName = tkinter.Label(window, textvariable=fileName)
+	downloadingFileName.grid(row=fileGUIRowNumber, column=0, columnspan=2, sticky=tkinter.E+tkinter.W)
+	
+	threadProgressBar = tkinter.ttk.Progressbar(window, orient=tkinter.HORIZONTAL, mode='determinate')
+	threadProgressBar.grid(row=fileGUIRowNumber, column=2, columnspan=2, sticky=tkinter.E+tkinter.W)
+	threadProgressBar['value']=0
+	threadProgressBar['maximum']=totalFileSize
+
+	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, downloadingFileName, threadProgressBar, cancelButton))
+	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
+	# Begin downloading the Url
+
+	f = open(fileName.get(), 'wb')
+	downloadedFileSize = 0
+	blockSize = 2**10 # 1024
 	while True:
-		buffer = u.read(block_sz)
+		buffer = u.read(blockSize)
 		if not buffer:
 			break
-		file_size_dl += len(buffer)
+		downloadedFileSize += len(buffer)
 		f.write(buffer)
-		progress['value'] = file_size_dl
-		# status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-		# status = status + chr(8)*(len(status)+1)
-		with print_lock:	    
-			print(file_size_dl)
+		threadProgressBar['value'] = downloadedFileSize
 	f.close()
+	downloadingFileName.grid_forget()
+	threadProgressBar.grid_forget()
+	# print("url finished downloading")
 
-def DownloaderThreadCreator():
-	threads = []
+def createThread():
+	global threadJobList
+	global fileGUIRowNumber
+	## !!! Caution !!! Using because the url is already verified
+	url = textBoxContents.get()
+	t = threading.Thread(target=downloadOnAThread, args=(url,))
+	fileGUIRowNumber+=1
+	threadJobList.append(t)
+	t.start()
+	t.join(1)
+	pass
 
-	for url in storeUrlsToDownload:
-		t = threading.Thread(target=downloader, args=(url,)) 
-		threads.append(t)	
-		t.start()
-
-	for t in threads:
-		t.join()
-
-def url_is_alive(url):
+def validateUrl(url):
+	# This function ensures if the url passed to the function is a valid, downloadable url.
+	# For example, webpages like https://www.google.com is rejected as it a webpage and not a file.
+	# This function is called at every change of the textbox. So this validation is in realtime. 
+	# Moreover, it handles the enabling and disabling of "Add Url" button properly
+	# However this function works pretty slow.
 	try:
 		request = urllib.request.Request(url)
 		request.get_method = lambda: 'HEAD'
@@ -62,81 +98,63 @@ def url_is_alive(url):
 		return False
 	try:
 		try:
-			urllib.request.urlopen(request)
-			# try:
-			# 	file_size = int(u.getheader("Content-Length"))/(1024)
-			# except AttributeError:
-			# 	return False
-			# addButton.config(state=tkinter.NORMAL)
-			# addButton.config(text='Add, ' + str(file_size) + 'K')
+			u = urllib.request.urlopen(request)
+			try:
+				filelengthKB = int(u.getheader("Content-Length"))/(1024)
+				filelengthMB = filelengthKB/1024
+				fileName = url.split('/')[-1]
+			except:
+				return False
+			# URL is valid from here
+			addUrlButton.config(state=tkinter.NORMAL)		# Enable the button
+			if(filelengthMB < 1):
+				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthKB,2)) + 'K')
+			else:
+				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthMB,2)) + 'M')
+			# URL is valid till here
+			return True
 		except urllib.request.URLError:
 			return False
-		return True
 	except urllib.request.HTTPError:
 		return False
 
-def addButtonPressed():
-	#Check for the url validity before adding or trace it before 
-	print(EnteredURL.get() + " -> the url will be added after validity checking")
-	if(checkForExistenceOfUrl()):
-		print("VALID!")
-		storeUrlsToDownload.append(EnteredURL.get())
-	print(storeUrlsToDownload)
-	DownloaderThreadCreator()
+def changeButtonState(*args):		# Take some dummy arguments
+	urlValidState = validateUrl(textBoxContents.get())	# Either True or False
+	if not urlValidState:
+		addUrlButton.config(state=tkinter.DISABLED)
+		addUrlButton.config(text='Check URL')
+# Some Keyboard Handler functions for User-friendliness
 
-def checkForExistenceOfUrl(*args):
-	if(EnteredURL.get()):
-		if(not url_is_alive(EnteredURL.get())):
-			addButton.config(state=tkinter.DISABLED)
-			addButton.config(text='Check URL')
-			return False
-		else:
-			addButton.config(state=tkinter.NORMAL)
-			addButton.config(text='Add')
-			return True
-	else:
-		addButton.config(state=tkinter.DISABLED)
-		return False
-		
-def pressedKey(event):
-	print("Return was pressed, same as add button pressed")
-	addButtonPressed()
+# =================================
+# Graphical User Interface building
+# =================================
+'''
+	_____________________________________________
+	|				< App Name >				|
+	|	url: <Entry Field>		<Add Button>	|
+	|	<File Name 1>			<Progress Bar>	|
+	|	<File Name 1>			<Progress Bar>	|
+	|											|
+	..											..
 
-def selectAll(event):
-	urlTextBox.selection_range(0,len(EnteredURL.get()))
+'''
+# Name of the app at the top
+appNameLabel = tkinter.Label(window, text=appName)
+appNameLabel.grid(row=0, column=0, columnspan=5)	# Span Across all 5 columns
 
-#TITLE LABEL
-label = tkinter.Label(window, text=AppName)
-# label.pack()
-label.grid(row=0, column=0, columnspan=5)
+urlLabel = tkinter.Label(window, text='URL : ')
+urlLabel.grid(row=1, column=0, columnspan=1)		# Next row, one column span
 
-# URL: Label on the left of the text box
-urlLabel = tkinter.Label(window, text='URL:')
-# urlLabel.pack(after=label, side=tkinter.LEFT, anchor='nw')
-urlLabel.grid(row=1, column=0, rowspan=1, sticky=tkinter.W+tkinter.E+tkinter.N+tkinter.S)
-#URL TextBox and the Add button
+textBoxContents = tkinter.StringVar(window, value='')		# This variable will have all the contents of the Entry/Textbox
+textBoxContents.trace("w", changeButtonState)						# At every change of the textbox contents, Check to see if you need to enable the button
+urlEntryBox = tkinter.Entry(window, textvariable=textBoxContents)
+urlEntryBox.grid(row=1,column=1, columnspan=2, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)	# Make the text box fill the columns
 
-EnteredURL = tkinter.StringVar(window, value='')
-EnteredURL.trace('w', checkForExistenceOfUrl)
+addUrlButton = tkinter.Button(window, text='Add Url', state=tkinter.DISABLED, command=createThread)	# Initially the button is disabled
+addUrlButton.grid(row=1, column=3, columnspan=2, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W) # We want a chonky button
 
-urlTextBox = tkinter.Entry(window, exportselection=0, textvariable=EnteredURL)
-addButton = tkinter.Button(window,text='Add', command=addButtonPressed, state=tkinter.DISABLED)
-# urlTextBox.pack(after=urlLabel,side=tkinter.LEFT,expand=True, anchor='nw', fill=tkinter.X)
-urlTextBox.grid(row=1, column=1, rowspan=1, columnspan=2,sticky=tkinter.W+tkinter.E+tkinter.N+tkinter.S)
-urlTextBox.bind('<Return>', pressedKey)
-urlTextBox.bind('<Command-a>', selectAll)
-# addButton.pack(after=urlTextBox,side=tkinter.RIGHT, expand=False, anchor='nw')
-addButton.grid(row=1, column=3, rowspan=1, columnspan=1, sticky=tkinter.W+tkinter.E+tkinter.N+tkinter.S)
+ttk.Separator(window,orient=tkinter.HORIZONTAL).grid(row=2, columnspan=5, sticky=tkinter.E+tkinter.W)	# Some horizontal Line
 
-window.grid_columnconfigure(0, weight=0)
-window.grid_columnconfigure(1, weight=1)
-window.grid_columnconfigure(2, weight=1)
-window.grid_columnconfigure(3, weight=1)
-window.grid_columnconfigure(4, weight=0)
+# The downloads will be added by the thread function
 
-downloadUrlLabel = tkinter.Label(window, textvariable=file_name)
-downloadUrlLabel.grid(row=2, column=0,columnspan=2, sticky=tkinter.W+tkinter.E+tkinter.N+tkinter.S)
-
-progress = tkinter.ttk.Progressbar(window,orient="horizontal", length=200, mode="determinate")
-progress.grid(row=2, column=2, columnspan=2, sticky=tkinter.W)
 window.mainloop()
