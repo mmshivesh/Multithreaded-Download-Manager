@@ -1,3 +1,4 @@
 .DS_Store
 test/
-100MB.bin
+*.bin
+*.pdf
