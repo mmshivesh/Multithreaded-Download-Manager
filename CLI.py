@@ -44,5 +44,3 @@ for url in args.url_list:
 for t in threads:
 	t.join()
 
- 
-# https://speed.hetzner.de/100MB.bin http://unec.edu.az/application/uploads/2014/12/pdf-sample.pdf
