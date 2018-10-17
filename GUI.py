@@ -125,6 +125,16 @@ def changeButtonState(*args):		# Take some dummy arguments
 		addUrlButton.config(text='Check URL')
 # Some Keyboard Handler functions for User-friendliness
 
+def pressedKey(event):
+	print("Return was pressed, same as add button pressed")
+	urlValidState = validateUrl(textBoxContents.get())
+	if urlValidState:
+		createThread()
+
+def selectAll(event):
+	urlEntryBox.selection_range(0,len(textBoxContents.get()))
+
+
 # =================================
 # Graphical User Interface building
 # =================================
@@ -148,6 +158,8 @@ urlLabel.grid(row=1, column=0, columnspan=1)		# Next row, one column span
 textBoxContents = tkinter.StringVar(window, value='')		# This variable will have all the contents of the Entry/Textbox
 textBoxContents.trace("w", changeButtonState)						# At every change of the textbox contents, Check to see if you need to enable the button
 urlEntryBox = tkinter.Entry(window, textvariable=textBoxContents)
+urlEntryBox.bind('<Command-a>', selectAll)
+urlEntryBox.bind('<Return>', pressedKey)
 urlEntryBox.grid(row=1,column=1, columnspan=2, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)	# Make the text box fill the columns
 
 addUrlButton = tkinter.Button(window, text='Add Url', state=tkinter.DISABLED, command=createThread)	# Initially the button is disabled
