@@ -29,9 +29,19 @@ window.grid_columnconfigure(4, weight=0)
 
 locationFile = open('location.txt', 'r')
 downloadLocation = locationFile.read()
-print(downloadLocation)
 locationFile.close()
 # exit()
+
+def viewHistory():
+	toplevel = tkinter.Toplevel()
+	historyFile = open('downloadHistory.txt', 'r')
+	history = historyFile.read()
+	historyFile.close()
+	label1 = tkinter.Label(toplevel, text='History', height=0, width=100)
+	label1.pack()
+	label2 = tkinter.Label(toplevel, text=history, height=0, width=100)
+	label2.pack()
+
 def changeLocation():
 	global downloadLocation
 	returnedDownloadLocation = filedialog.askdirectory(initialdir=downloadLocation)
@@ -40,6 +50,7 @@ def changeLocation():
 		locationFile = open('location.txt', 'w+')
 		locationFile.truncate()
 		locationFile.write(returnedDownloadLocation)
+		locationFile.close()
 	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
 def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
@@ -97,6 +108,8 @@ def createThread():
 	global fileGUIRowNumber
 	## !!! Caution !!! Using because the url is already verified
 	url = textBoxContents.get()
+	historyFile = open('downloadHistory.txt', 'a')
+	historyFile.write(url + '\n')
 	t = threading.Thread(target=downloadOnAThread, args=(url,))
 	fileGUIRowNumber+=1
 	threadJobList.append(t)
@@ -178,6 +191,9 @@ appNameLabel.grid(row=0, column=0, columnspan=3)	# Span Across 3 columns
 
 downloadLocationButton = tkinter.Button(window, text='Download Location : ' + downloadLocation.split('/')[-1], command=changeLocation)
 downloadLocationButton.grid(row=0, column=3, columnspan=1, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)
+
+downloadHistoryButton = tkinter.Button(window, text='Download History', command=viewHistory)
+downloadHistoryButton.grid(row=0, column=4, columnspan=1, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)
 
 urlLabel = tkinter.Label(window, text='URL : ')
 urlLabel.grid(row=1, column=0, columnspan=1)		# Next row, one column span
