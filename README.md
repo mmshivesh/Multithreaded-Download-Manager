@@ -1,6 +1,8 @@
 # Multithreaded Download Manager for Operating Systems Course
 
-## Requires Python 3
+## Requires
+
+* Python 3
 
 ## Usage
 1. Download CLI.py for command line interface. 
