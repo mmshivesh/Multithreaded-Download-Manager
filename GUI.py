@@ -41,6 +41,14 @@ def viewHistory():
 	label1.pack()
 	label2 = tkinter.Label(toplevel, text=history, height=0, width=100)
 	label2.pack()
+	clearList = tkinter.Button(toplevel, text='Clear History', height=0, width=100, command= lambda : deleteHistory(label2))
+	clearList.pack()
+
+def deleteHistory(label):
+	label.config(text='')
+	historyFile = open('downloadHistory.txt', 'w')
+	historyFile.truncate()
+	historyFile.close()
 
 def changeLocation():
 	global downloadLocation
