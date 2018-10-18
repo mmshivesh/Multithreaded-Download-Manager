@@ -45,7 +45,7 @@ def downloadOnAThread(url):
 	downloadPath = os.path.join(os.path.expanduser(downloadLocation),url.split('/')[-1])
 	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
-	print(fileNameStr)
+	print(downloadPath)
 	# print(totalFileSize, url)
 	
 	# Set up the GUI
@@ -75,6 +75,7 @@ def downloadOnAThread(url):
 	f.close()
 	downloadingFileName.grid_forget()
 	threadProgressBar.grid_forget()
+	cancelButton.grid_forget()
 	# print("url finished downloading")
 
 def createThread():
@@ -135,7 +136,7 @@ def changeButtonState(*args):		# Take some dummy arguments
 # Some Keyboard Handler functions for User-friendliness
 
 def pressedKey(event):
-	print("Return was pressed, same as add button pressed")
+	# print("Return was pressed, same as add button pressed")
 	urlValidState = validateUrl(textBoxContents.get())
 	if urlValidState:
 		createThread()
