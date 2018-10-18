@@ -3,3 +3,4 @@ test/
 *.bin
 *.pdf
 __pycache__
+*.txt
