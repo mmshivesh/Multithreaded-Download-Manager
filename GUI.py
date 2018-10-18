@@ -31,10 +31,9 @@ try:
 	with open('location.txt', 'r') as locationFile:
 		downloadLocation = locationFile.read()
 except:
-	locationFile = open('location.txt', 'w')
-	downloadLocation = '~/Downloads'
-	locationFile.write(downloadLocation)
-	locationFile.close()
+	with open('location.txt', 'w') as locationFile:
+		downloadLocation = '~/Downloads'
+		locationFile.write(downloadLocation)
 # exit()
 
 def viewHistory():
@@ -71,9 +70,13 @@ def changeLocation():
 		locationFile.close()
 	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
-def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
+def parseFileType(contenttype):
+	return contenttype.split('/')[-1]
+
+def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton):
 	f.close()
 	fileNameLabel.grid_forget()
+	contentTypeLabel.grid_forget()
 	progressBar.grid_forget()
 	cancelButton.grid_forget()
 	print(threadJobList)
@@ -90,19 +93,24 @@ def downloadOnAThread(url):
 	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
 	print(downloadPath)
+	fileType = parseFileType(u.getheader('Content-type'))
+	fileTypetk = tkinter.StringVar(window, value=fileType)
 	# print(totalFileSize, url)
 	
 	# Set up the GUI
 	
 	downloadingFileName = tkinter.Label(window, textvariable=fileName)
-	downloadingFileName.grid(row=fileGUIRowNumber, column=0, columnspan=2, sticky=tkinter.E+tkinter.W)
+	downloadingFileName.grid(row=fileGUIRowNumber, column=0, columnspan=1, sticky=tkinter.E+tkinter.W)
 	
+	contentTypeLabel = tkinter.Label(window, textvariable=fileTypetk)
+	contentTypeLabel.grid(row=fileGUIRowNumber, column=1, columnspan=1, sticky=tkinter.E+tkinter.W)
+
 	threadProgressBar = tkinter.ttk.Progressbar(window, orient=tkinter.HORIZONTAL, mode='determinate')
 	threadProgressBar.grid(row=fileGUIRowNumber, column=2, columnspan=2, sticky=tkinter.E+tkinter.W)
 	threadProgressBar['value']=0
 	threadProgressBar['maximum']=totalFileSize
 
-	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, downloadingFileName, threadProgressBar, cancelButton))
+	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton))
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
 
@@ -119,7 +127,7 @@ def downloadOnAThread(url):
 		except ValueError:
 			break
 		threadProgressBar['value'] = downloadedFileSize
-	terminateThread(threading.current_thread(), f, downloadingFileName, threadProgressBar, cancelButton)
+	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton)
 	# print("Thread Still executing")
 	# print("url finished downloading")
 
