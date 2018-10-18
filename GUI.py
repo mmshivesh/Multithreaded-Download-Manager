@@ -70,8 +70,17 @@ def changeLocation():
 		locationFile.close()
 	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
-def parseFileType(contenttype):
-	return contenttype.split('/')[-1]
+def parseFileType(contenttype, window, fileGUIRowNumber):
+	contentList = contenttype.split('/')
+	# print(contentList)
+	fileTypetk = tkinter.StringVar(window, value=contentList[-1])
+	contentTypeLabel = tkinter.Label(window, textvariable=fileTypetk)
+	contentTypeLabel.grid(row=fileGUIRowNumber, column=1, columnspan=1, sticky=tkinter.E+tkinter.W)
+	if contentList[0]=='application':
+		contentTypeLabel.config(foreground="red")
+	elif contentList[0] == 'video':
+		contentTypeLabel.config(foreground="blue")
+	return contentTypeLabel
 
 def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton):
 	f.close()
@@ -92,9 +101,7 @@ def downloadOnAThread(url):
 	downloadPath = os.path.join(os.path.expanduser(downloadLocation),url.split('/')[-1])
 	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
-	print(downloadPath)
-	fileType = parseFileType(u.getheader('Content-type'))
-	fileTypetk = tkinter.StringVar(window, value=fileType)
+	
 	# print(totalFileSize, url)
 	
 	# Set up the GUI
@@ -102,8 +109,8 @@ def downloadOnAThread(url):
 	downloadingFileName = tkinter.Label(window, textvariable=fileName)
 	downloadingFileName.grid(row=fileGUIRowNumber, column=0, columnspan=1, sticky=tkinter.E+tkinter.W)
 	
-	contentTypeLabel = tkinter.Label(window, textvariable=fileTypetk)
-	contentTypeLabel.grid(row=fileGUIRowNumber, column=1, columnspan=1, sticky=tkinter.E+tkinter.W)
+	contentTypeLabel = parseFileType(u.getheader('Content-type'), window, fileGUIRowNumber)
+	
 
 	threadProgressBar = tkinter.ttk.Progressbar(window, orient=tkinter.HORIZONTAL, mode='determinate')
 	threadProgressBar.grid(row=fileGUIRowNumber, column=2, columnspan=2, sticky=tkinter.E+tkinter.W)
