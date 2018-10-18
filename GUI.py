@@ -4,6 +4,7 @@
 # Import Statements
 import tkinter				# Python GUI Library - For building GUI
 from tkinter import ttk		# Overrides tk themed widgets - Progressbar is in this library
+from tkinter import filedialog
 import threading			# Python Threading Library - Start multiple downloads in threaded fashion
 import urllib.request		# Python url parse library - Used to Download urls
 import os
@@ -27,6 +28,13 @@ window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=0)
 
 downloadLocation = '~/Downloads'
+
+def changeLocation():
+	global downloadLocation
+	returnedDownloadLocation = filedialog.askdirectory(initialdir=downloadLocation)
+	if returnedDownloadLocation:
+		downloadLocation = returnedDownloadLocation
+	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
 def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
 	f.close()
@@ -160,7 +168,10 @@ def selectAll(event):
 '''
 # Name of the app at the top
 appNameLabel = tkinter.Label(window, text=appName)
-appNameLabel.grid(row=0, column=0, columnspan=5)	# Span Across all 5 columns
+appNameLabel.grid(row=0, column=0, columnspan=3)	# Span Across 3 columns
+
+downloadLocationButton = tkinter.Button(window, text='Download Location : ' + downloadLocation.split('/')[-1], command=changeLocation)
+downloadLocationButton.grid(row=0, column=3, columnspan=1, sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)
 
 urlLabel = tkinter.Label(window, text='URL : ')
 urlLabel.grid(row=1, column=0, columnspan=1)		# Next row, one column span
