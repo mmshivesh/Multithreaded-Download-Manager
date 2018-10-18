@@ -27,13 +27,19 @@ window.grid_columnconfigure(2, weight=1)
 window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=0)
 
-downloadLocation = '~/Downloads'
-
+locationFile = open('location.txt', 'r')
+downloadLocation = locationFile.read()
+print(downloadLocation)
+locationFile.close()
+# exit()
 def changeLocation():
 	global downloadLocation
 	returnedDownloadLocation = filedialog.askdirectory(initialdir=downloadLocation)
 	if returnedDownloadLocation:
 		downloadLocation = returnedDownloadLocation
+		locationFile = open('location.txt', 'w+')
+		locationFile.truncate()
+		locationFile.write(returnedDownloadLocation)
 	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
 def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
