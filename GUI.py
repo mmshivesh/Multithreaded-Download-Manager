@@ -27,16 +27,27 @@ window.grid_columnconfigure(2, weight=1)
 window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=0)
 
-locationFile = open('location.txt', 'r')
-downloadLocation = locationFile.read()
-locationFile.close()
+try:
+	locationFile = open('location.txt', 'r')
+	downloadLocation = locationFile.read()
+	locationFile.close()
+except:
+	locationFile = open('location.txt', 'w')
+	downloadLocation = '~/Downloads'
+	locationFile.write(downloadLocation)
+	locationFile.close()
 # exit()
 
 def viewHistory():
 	toplevel = tkinter.Toplevel()
-	historyFile = open('downloadHistory.txt', 'r')
-	history = historyFile.read()
-	historyFile.close()
+	try:
+		historyFile = open('downloadHistory.txt', 'r')
+		history = historyFile.read()
+		historyFile.close()
+	except:
+		historyFile = open('downloadHistory.txt', 'w')
+		history= ''
+		historyFile.close()
 	label1 = tkinter.Label(toplevel, text='History', height=0, width=100)
 	label1.pack()
 	label2 = tkinter.Label(toplevel, text=history, height=0, width=100)
