@@ -73,13 +73,18 @@ def changeLocation():
 def parseFileType(contenttype, window, fileGUIRowNumber):
 	contentList = contenttype.split('/')
 	# print(contentList)
-	fileTypetk = tkinter.StringVar(window, value=contentList[-1])
+	fileTypetk = tkinter.StringVar(window, value=contentList[0])
 	contentTypeLabel = tkinter.Label(window, textvariable=fileTypetk)
 	contentTypeLabel.grid(row=fileGUIRowNumber, column=1, columnspan=1, sticky=tkinter.E+tkinter.W)
 	if contentList[0]=='application':
 		contentTypeLabel.config(foreground="red")
+		fileTypetk.set(contentList[-1])
 	elif contentList[0] == 'video':
 		contentTypeLabel.config(foreground="blue")
+		fileTypetk.set(contentList[0])
+	elif contentList[0] == 'music':
+		contentTypeLabel.config(foreground="green")
+		fileTypetk.set(contentList[-1])
 	return contentTypeLabel
 
 def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton):
