@@ -6,6 +6,7 @@ import tkinter				# Python GUI Library - For building GUI
 from tkinter import ttk		# Overrides tk themed widgets - Progressbar is in this library
 import threading			# Python Threading Library - Start multiple downloads in threaded fashion
 import urllib.request		# Python url parse library - Used to Download urls
+import os
 
 # Global Constants
 fileGUIRowNumber = 2		# 0 and 1 are GUI elements. The first download can be inserted at 2
@@ -25,6 +26,8 @@ window.grid_columnconfigure(2, weight=1)
 window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=0)
 
+downloadLocation = '~/Downloads'
+
 def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
 	f.close()
 	fileNameLabel.grid_forget()
@@ -38,8 +41,11 @@ def downloadOnAThread(url):
 	# This function creates a thread, pushes the coressponding filename and the progress onto the GUI and manages it
 	# When the download finishes, the corresponding row is removed (opt. and all others are moved up?)
 	u = urllib.request.urlopen(url)										# Open the File
-	fileName = tkinter.StringVar(window,value=url.split('/')[-1])		# Get the file name to write to
+	fileNameStr = url.split('/')[-1]
+	downloadPath = os.path.join(os.path.expanduser(downloadLocation),url.split('/')[-1])
+	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
+	print(downloadPath)
 	# print(totalFileSize, url)
 	
 	# Set up the GUI
@@ -56,7 +62,7 @@ def downloadOnAThread(url):
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
 
-	f = open(fileName.get(), 'wb')
+	f = open(downloadPath, 'wb')
 	downloadedFileSize = 0
 	blockSize = 2**10 # 1024
 	while True:
@@ -69,6 +75,7 @@ def downloadOnAThread(url):
 	f.close()
 	downloadingFileName.grid_forget()
 	threadProgressBar.grid_forget()
+	cancelButton.grid_forget()
 	# print("url finished downloading")
 
 def createThread():
@@ -102,6 +109,7 @@ def validateUrl(url):
 			try:
 				filelengthKB = int(u.getheader("Content-Length"))/(1024)
 				filelengthMB = filelengthKB/1024
+				filelengthGB = filelengthMB/1024
 				fileName = url.split('/')[-1]
 			except:
 				return False
@@ -109,6 +117,8 @@ def validateUrl(url):
 			addUrlButton.config(state=tkinter.NORMAL)		# Enable the button
 			if(filelengthMB < 1):
 				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthKB,2)) + 'K')
+			elif filelengthGB > 0.9:
+				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthGB,2)) + 'G')
 			else:
 				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthMB,2)) + 'M')
 			# URL is valid till here
@@ -126,7 +136,7 @@ def changeButtonState(*args):		# Take some dummy arguments
 # Some Keyboard Handler functions for User-friendliness
 
 def pressedKey(event):
-	print("Return was pressed, same as add button pressed")
+	# print("Return was pressed, same as add button pressed")
 	urlValidState = validateUrl(textBoxContents.get())
 	if urlValidState:
 		createThread()
