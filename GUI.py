@@ -28,9 +28,8 @@ window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=0)
 
 try:
-	locationFile = open('location.txt', 'r')
-	downloadLocation = locationFile.read()
-	locationFile.close()
+	with open('location.txt', 'r') as locationFile:
+		downloadLocation = locationFile.read()
 except:
 	locationFile = open('location.txt', 'w')
 	downloadLocation = '~/Downloads'
@@ -78,7 +77,8 @@ def terminateThread(thread, f, fileNameLabel, progressBar, cancelButton):
 	progressBar.grid_forget()
 	cancelButton.grid_forget()
 	print(threadJobList)
-	thread.exit(1)
+	thread._stop()
+	print(threadJobList)
 
 def downloadOnAThread(url):
 	# It is ensured that the 'url' obtained here is downloadable
@@ -114,12 +114,13 @@ def downloadOnAThread(url):
 		if not buffer:
 			break
 		downloadedFileSize += len(buffer)
-		f.write(buffer)
+		try:
+			f.write(buffer)
+		except ValueError:
+			break
 		threadProgressBar['value'] = downloadedFileSize
-	f.close()
-	downloadingFileName.grid_forget()
-	threadProgressBar.grid_forget()
-	cancelButton.grid_forget()
+	terminateThread(threading.current_thread(), f, downloadingFileName, threadProgressBar, cancelButton)
+	# print("Thread Still executing")
 	# print("url finished downloading")
 
 def createThread():
@@ -132,6 +133,7 @@ def createThread():
 	t = threading.Thread(target=downloadOnAThread, args=(url,))
 	fileGUIRowNumber+=1
 	threadJobList.append(t)
+	t.daemon = False
 	t.start()
 	t.join(1)
 	pass
