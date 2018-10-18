@@ -93,9 +93,12 @@ def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, can
 	contentTypeLabel.grid_forget()
 	progressBar.grid_forget()
 	cancelButton.grid_forget()
-	print(threadJobList)
-	thread._stop()
-	print(threadJobList)
+	# print(threadJobList)
+	try:
+		thread._stop()
+	except:
+		pass
+	# print(threadJobList)
 
 def downloadOnAThread(url):
 	# It is ensured that the 'url' obtained here is downloadable
