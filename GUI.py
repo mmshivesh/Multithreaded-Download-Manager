@@ -87,13 +87,17 @@ def parseFileType(contenttype, window, fileGUIRowNumber):
 		fileTypetk.set(contentList[-1])
 	return contentTypeLabel
 
-def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton):
+def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton, downloadPath, abnormalExit):
 	f.close()
 	fileNameLabel.grid_forget()
 	contentTypeLabel.grid_forget()
 	progressBar.grid_forget()
 	cancelButton.grid_forget()
 	# print(threadJobList)
+	if abnormalExit:
+		os.remove(downloadPath)
+	else:
+		pass
 	try:
 		thread._stop()
 	except:
@@ -125,7 +129,7 @@ def downloadOnAThread(url):
 	threadProgressBar['value']=0
 	threadProgressBar['maximum']=totalFileSize
 
-	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton))
+	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, True))
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
 
@@ -142,7 +146,12 @@ def downloadOnAThread(url):
 		except ValueError:
 			break
 		threadProgressBar['value'] = downloadedFileSize
-	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton)
+	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, False)
+	# f.close()
+	# downloadingFileName.grid_forget()
+	# contentTypeLabel.grid_forget()
+	# threadProgressBar.grid_forget()
+	# cancelButton.grid_forget()
 	# print("Thread Still executing")
 	# print("url finished downloading")
 
