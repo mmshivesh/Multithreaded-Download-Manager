@@ -132,8 +132,10 @@ def downloadOnAThread(url):
 	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, True))
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
-
+	# TODO: BEGIN DOWNLOADING ONLY IF THE FILE DOESN'T EXIST. 
 	f = open(downloadPath, 'wb')
+	# else:
+	# 	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, False)
 	downloadedFileSize = 0
 	blockSize = 2**10 # 1024
 	while True:
@@ -160,6 +162,7 @@ def createThread():
 	global fileGUIRowNumber
 	## !!! Caution !!! Using because the url is already verified
 	url = textBoxContents.get()
+	textBoxContents.set('')
 	historyFile = open('downloadHistory.txt', 'a')
 	historyFile.write(url + '\n')
 	t = threading.Thread(target=downloadOnAThread, args=(url,))
@@ -191,6 +194,10 @@ def validateUrl(url):
 				filelengthMB = filelengthKB/1024
 				filelengthGB = filelengthMB/1024
 				fileName = url.split('/')[-1]
+				print(len(fileName))
+				if len(fileName)>23:
+					print("Long name you've got there... It would be a shame if I shortened it.")
+					fileName = fileName[:10] + '...' + fileName[-7:]
 			except:
 				return False
 			# URL is valid from here
