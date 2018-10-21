@@ -8,7 +8,7 @@ from tkinter import filedialog
 import threading			# Python Threading Library - Start multiple downloads in threaded fashion
 import urllib.request		# Python url parse library - Used to Download urls
 import os
-
+import string, random
 # Global Constants
 fileGUIRowNumber = 2		# 0 and 1 are GUI elements. The first download can be inserted at 2
 threadJobList = []
@@ -70,19 +70,23 @@ def changeLocation():
 		locationFile.close()
 	downloadLocationButton.config(text='Download Location : '+ downloadLocation.split('/')[-1])
 
-def parseFileType(contenttype, window, fileGUIRowNumber):
-	contentList = contenttype.split('/')
+def parseFileType(contenttype, window, fileGUIRowNumber):	
+	try:
+		contentList = contenttype.split('/')
+		fileTypetk = tkinter.StringVar(window, value=contentList[0])
+	except:
+		fileTypetk = tkinter.StringVar(window, value='Unknown')
+
 	# print(contentList)
-	fileTypetk = tkinter.StringVar(window, value=contentList[0])
 	contentTypeLabel = tkinter.Label(window, textvariable=fileTypetk)
 	contentTypeLabel.grid(row=fileGUIRowNumber, column=1, columnspan=1, sticky=tkinter.E+tkinter.W)
-	if contentList[0]=='application':
+	if fileTypetk=='application':
 		contentTypeLabel.config(foreground="red")
 		fileTypetk.set(contentList[-1])
-	elif contentList[0] == 'video':
+	elif fileTypetk == 'video':
 		contentTypeLabel.config(foreground="blue")
 		fileTypetk.set(contentList[0])
-	elif contentList[0] == 'music':
+	elif fileTypetk == 'music':
 		contentTypeLabel.config(foreground="green")
 		fileTypetk.set(contentList[-1])
 	return contentTypeLabel
@@ -110,8 +114,12 @@ def downloadOnAThread(url):
 	# When the download finishes, the corresponding row is removed (opt. and all others are moved up?)
 	u = urllib.request.urlopen(url)										# Open the File
 	fileNameStr = url.split('/')[-1]
-	downloadPath = os.path.join(os.path.expanduser(downloadLocation),url.split('/')[-1])
 	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
+	downloadPath = os.path.join(os.path.expanduser(downloadLocation),fileNameStr)
+	if os.path.exists(downloadPath):
+		fileNameRandStr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) + fileNameStr
+		# fileName = tkinter.StringVar(window,value=fileNameRandStr)		# Get the file name to write to
+		downloadPath = os.path.join(os.path.expanduser(downloadLocation),fileNameRandStr)
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
 	
 	# print(totalFileSize, url)
@@ -132,7 +140,6 @@ def downloadOnAThread(url):
 	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, True))
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
-	# TODO: BEGIN DOWNLOADING ONLY IF THE FILE DOESN'T EXIST. 
 	f = open(downloadPath, 'wb')
 	# else:
 	# 	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, False)
@@ -194,9 +201,9 @@ def validateUrl(url):
 				filelengthMB = filelengthKB/1024
 				filelengthGB = filelengthMB/1024
 				fileName = url.split('/')[-1]
-				print(len(fileName))
+				# print(len(fileName))
 				if len(fileName)>23:
-					print("Long name you've got there... It would be a shame if I shortened it.")
+					# print("Long name you've got there... It would be a shame if I shortened it.")
 					fileName = fileName[:10] + '...' + fileName[-7:]
 			except:
 				return False
