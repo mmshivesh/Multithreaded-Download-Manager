@@ -1,4 +1,4 @@
-# Multithreaded Download Manager for Operating Systems Course
+# Open Source Multithreaded Download Manager
 
 ## Requires
 
