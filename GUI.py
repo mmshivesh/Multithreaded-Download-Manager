@@ -35,6 +35,10 @@ except:
 		downloadLocation = '~/Downloads'
 		locationFile.write(downloadLocation)
 # exit()
+def shortenFileName(fileName):
+	if len(fileName)>23:
+		# print("Long name you've got there... It would be a shame if I shortened it.")
+		return fileName[:10] + '...' + fileName[-7:]
 
 def viewHistory():
 	toplevel = tkinter.Toplevel()
@@ -114,10 +118,11 @@ def downloadOnAThread(url):
 	# When the download finishes, the corresponding row is removed (opt. and all others are moved up?)
 	u = urllib.request.urlopen(url)										# Open the File
 	fileNameStr = url.split('/')[-1]
-	fileName = tkinter.StringVar(window,value=fileNameStr)		# Get the file name to write to
+	shortenedFileName = shortenFileName(fileNameStr)
+	shortenedFileNametk = tkinter.StringVar(window,value=shortenedFileName)		# Get the file name to write to
 	downloadPath = os.path.join(os.path.expanduser(downloadLocation),fileNameStr)
 	if os.path.exists(downloadPath):
-		fileNameRandStr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) + fileNameStr
+		fileNameRandStr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) + ' ' + fileNameStr
 		# fileName = tkinter.StringVar(window,value=fileNameRandStr)		# Get the file name to write to
 		downloadPath = os.path.join(os.path.expanduser(downloadLocation),fileNameRandStr)
 	totalFileSize = int(u.getheader("Content-Length"))					# Get the total file size
@@ -126,7 +131,7 @@ def downloadOnAThread(url):
 	
 	# Set up the GUI
 	
-	downloadingFileName = tkinter.Label(window, textvariable=fileName)
+	downloadingFileName = tkinter.Label(window, textvariable=shortenedFileNametk)
 	downloadingFileName.grid(row=fileGUIRowNumber, column=0, columnspan=1, sticky=tkinter.E+tkinter.W)
 	
 	contentTypeLabel = parseFileType(u.getheader('Content-type'), window, fileGUIRowNumber)
@@ -202,9 +207,7 @@ def validateUrl(url):
 				filelengthGB = filelengthMB/1024
 				fileName = url.split('/')[-1]
 				# print(len(fileName))
-				if len(fileName)>23:
-					# print("Long name you've got there... It would be a shame if I shortened it.")
-					fileName = fileName[:10] + '...' + fileName[-7:]
+				fileName = shortenFileName(fileName)
 			except:
 				return False
 			# URL is valid from here
