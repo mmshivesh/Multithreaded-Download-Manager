@@ -12,6 +12,7 @@ import string, random
 # Global Constants
 fileGUIRowNumber = 2		# 0 and 1 are GUI elements. The first download can be inserted at 2
 threadJobList = []
+totalCount = threading.Semaphore(1)
 
 # =================================
 # Initialize GUI
@@ -97,6 +98,7 @@ def parseFileType(contenttype, window, fileGUIRowNumber):
 
 def terminateThread(thread, f, contentTypeLabel, fileNameLabel, progressBar, cancelButton, downloadPath, abnormalExit):
 	f.close()
+	totalCount.release()
 	fileNameLabel.grid_forget()
 	contentTypeLabel.grid_forget()
 	progressBar.grid_forget()
@@ -137,14 +139,16 @@ def downloadOnAThread(url):
 	contentTypeLabel = parseFileType(u.getheader('Content-type'), window, fileGUIRowNumber)
 	
 
-	threadProgressBar = tkinter.ttk.Progressbar(window, orient=tkinter.HORIZONTAL, mode='determinate')
-	threadProgressBar.grid(row=fileGUIRowNumber, column=2, columnspan=2, sticky=tkinter.E+tkinter.W)
-	threadProgressBar['value']=0
-	threadProgressBar['maximum']=totalFileSize
 
 	cancelButton = tkinter.Button(window, text="Cancel", command= lambda : terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, True))
 	cancelButton.grid(row=fileGUIRowNumber, column=4, columnspan=1, sticky=tkinter.E+tkinter.W)
 	# Begin downloading the Url
+	
+	totalCount.acquire()
+	threadProgressBar = tkinter.ttk.Progressbar(window, orient=tkinter.HORIZONTAL, mode='determinate')
+	threadProgressBar.grid(row=fileGUIRowNumber, column=2, columnspan=2, sticky=tkinter.E+tkinter.W)
+	threadProgressBar['value']=0
+	threadProgressBar['maximum']=totalFileSize
 	f = open(downloadPath, 'wb')
 	# else:
 	# 	terminateThread(threading.current_thread(), f, contentTypeLabel, downloadingFileName, threadProgressBar, cancelButton, downloadPath, False)
@@ -213,11 +217,21 @@ def validateUrl(url):
 			# URL is valid from here
 			addUrlButton.config(state=tkinter.NORMAL)		# Enable the button
 			if(filelengthMB < 1):
-				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthKB,2)) + 'K')
+				try:
+					addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthKB,2)) + 'K')
+				except:
+					addUrlButton.config(text='Add URL' + ', ' + str(round(filelengthKB,2)) + 'K')
 			elif filelengthGB > 0.9:
-				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthGB,2)) + 'G')
+				try:
+					addUrlButton.config(text='Add URL' + fileName + ', ' + str(round(filelengthGB,2)) + 'G')
+				except:
+					addUrlButton.config(text='Add URL' + ', ' + str(round(filelengthGB,2)) + 'G')
 			else:
-				addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthMB,2)) + 'M')
+				try:
+					addUrlButton.config(text='Add ' + fileName + ', ' + str(round(filelengthMB,2)) + 'M')
+				except:
+					addUrlButton.config(text='Add ' + ', ' + str(round(filelengthMB,2)) + 'M')
+
 			# URL is valid till here
 			return True
 		except urllib.request.URLError:
